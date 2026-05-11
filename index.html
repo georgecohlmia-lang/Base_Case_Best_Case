@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Best-Case, Base-Case, and Oh-No Scenarios — Founder Worksheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --ink: #1e1b2e;
+    --ink-2: #2d2a3e;
+    --ink-soft: #4a475c;
+    --ink-muted: #807c91;
+    --paper: #f5f3ec;
+    --paper-2: #ebe8df;
+    --paper-3: #ddd9cd;
+    --rule: #c9c4b5;
+    --rule-soft: #d8d3c5;
+
+    --purple: #3c325e;
+    --purple-2: #2a2245;
+    --purple-soft: #d9d4e3;
+
+    /* Three scenario accents — each a distinct mood */
+    --best: #a8761e;          /* golden amber — earned optimism */
+    --best-soft: #efddc0;
+    --best-tint: #f7ecd5;
+    --best-ink: #6b4a12;
+
+    --base: #4f6478;          /* slate blue-gray — grounded */
+    --base-soft: #d8dde4;
+    --base-tint: #e8ecf0;
+    --base-ink: #2e4254;
+
+    --ohno: #7a2f2f;          /* oxblood — serious, not alarming */
+    --ohno-soft: #ead4d4;
+    --ohno-tint: #f3e2e2;
+    --ohno-ink: #4f1d1d;
+
+    --focus: #fff3b0;
+    --good: #2e5834;
+    --warn: #9c3a1f;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Inter Tight", -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    min-height: 100vh;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 48px 60px 80px;
+  }
+
+  /* ---------- Masthead ---------- */
+  .masthead {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 40px;
+    align-items: end;
+    padding-bottom: 22px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 10px;
+  }
+  .eyebrow {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--purple);
+    margin: 0 0 8px;
+    font-weight: 600;
+  }
+  h1 {
+    font-family: "Fraunces", serif;
+    font-weight: 500;
+    font-size: 50px;
+    line-height: 1.02;
+    margin: 0 0 12px;
+    letter-spacing: -0.02em;
+  }
+  h1 em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--purple);
+  }
+  .tagline {
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--ink-soft);
+    margin: 0;
+    max-width: 62ch;
+    line-height: 1.5;
+  }
+  .meta {
+    text-align: right;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    color: var(--ink-muted);
+    letter-spacing: 0.05em;
+    line-height: 1.8;
+  }
+  .meta strong { color: var(--ink); font-weight: 500; }
+
+  /* ---------- Tri-color scenario strip ---------- */
+  .scenario-strip {
+    display: flex;
+    height: 6px;
+    border: 1px solid var(--ink);
+    border-top: none;
+    margin-bottom: 40px;
+  }
+  .scenario-strip > div { flex: 1; }
+  .strip-best { background: var(--best); }
+  .strip-base { background: var(--base); }
+  .strip-ohno { background: var(--ohno); }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 12px 18px;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+  }
+  .btn {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 9px 16px;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+  .btn:hover { background: var(--ink); color: var(--paper); }
+  .btn-primary { background: var(--ink); color: var(--paper); }
+  .btn-primary:hover { background: var(--purple); border-color: var(--purple); }
+  .btn-excel { background: var(--purple); border-color: var(--purple); color: var(--paper); }
+  .btn-excel:hover { background: var(--purple-2); border-color: var(--purple-2); }
+  .btn-ghost { border-color: var(--rule); color: var(--ink-soft); background: transparent; }
+  .toolbar-note {
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-left: auto;
+  }
+
+  /* ---------- Section structure ---------- */
+  section.chapter { margin-bottom: 52px; }
+  .chapter-head {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: baseline;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--ink);
+  }
+  .chapter-num {
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--purple);
+    padding: 4px 10px;
+    border: 1px solid var(--purple);
+    border-radius: 2px;
+    align-self: center;
+  }
+  .chapter-title {
+    font-family: "Fraunces", serif;
+    font-weight: 600;
+    font-size: 28px;
+    margin: 0;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+  .chapter-caption {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    font-weight: 500;
+  }
+  .chapter-intro {
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ink-soft);
+    max-width: 72ch;
+    margin: -4px 0 24px;
+    line-height: 1.55;
+  }
+
+  /* ---------- Setup ---------- */
+  .setup-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+  }
+  .setup-field {
+    padding: 18px 22px;
+    border-right: 1px solid var(--rule);
+  }
+  .setup-field:last-child { border-right: none; }
+  .field-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    font-weight: 500;
+    margin: 0 0 4px;
+  }
+  .field-hint {
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin: 0 0 10px;
+    line-height: 1.4;
+  }
+  .field-input {
+    width: 100%;
+    border: none;
+    border-bottom: 2px solid var(--ink);
+    background: transparent;
+    font-family: "Fraunces", serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--ink);
+    padding: 4px 0;
+    outline: none;
+  }
+  .field-input:focus { background: var(--focus); }
+  .field-input::placeholder { color: var(--ink-muted); font-style: italic; font-weight: 400; opacity: 0.7; }
+
+  /* ---------- Three-column scenarios ---------- */
+  .scenarios-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .scenario-col {
+    display: flex;
+    flex-direction: column;
+    background: var(--paper);
+    border: 1px solid var(--ink);
+  }
+  .scenario-col[data-scenario="best"] { border-top: 6px solid var(--best); }
+  .scenario-col[data-scenario="base"] { border-top: 6px solid var(--base); }
+  .scenario-col[data-scenario="ohno"] { border-top: 6px solid var(--ohno); }
+
+  .scenario-header {
+    padding: 16px 20px 14px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .scenario-col[data-scenario="best"] .scenario-header { background: var(--best-tint); }
+  .scenario-col[data-scenario="base"] .scenario-header { background: var(--base-tint); }
+  .scenario-col[data-scenario="ohno"] .scenario-header { background: var(--ohno-tint); }
+
+  .scenario-header .tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .scenario-col[data-scenario="best"] .scenario-header .tag { color: var(--best-ink); }
+  .scenario-col[data-scenario="base"] .scenario-header .tag { color: var(--base-ink); }
+  .scenario-col[data-scenario="ohno"] .scenario-header .tag { color: var(--ohno-ink); }
+
+  .scenario-header h3 {
+    font-family: "Fraunces", serif;
+    font-weight: 600;
+    font-size: 22px;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .scenario-header p {
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .scenario-section {
+    padding: 14px 20px;
+    border-bottom: 1px dashed var(--rule);
+  }
+  .scenario-section:last-child { border-bottom: none; }
+  .section-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    font-weight: 600;
+    margin: 0 0 8px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .section-label .num {
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0;
+    text-transform: none;
+    font-weight: 400;
+  }
+  .scenario-col[data-scenario="best"] .section-label .num { color: var(--best); }
+  .scenario-col[data-scenario="base"] .section-label .num { color: var(--base); }
+  .scenario-col[data-scenario="ohno"] .section-label .num { color: var(--ohno); }
+
+  .scenario-input {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid var(--rule);
+    background: transparent;
+    font-family: "Fraunces", serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    padding: 4px 0 6px;
+    outline: none;
+  }
+  .scenario-input:focus { background: var(--focus); border-bottom-color: var(--ink); }
+  .scenario-input::placeholder { color: var(--ink-muted); font-style: italic; font-weight: 400; opacity: 0.6; }
+
+  .scenario-textarea {
+    width: 100%;
+    border: 1px solid var(--rule);
+    background: var(--paper-2);
+    font-family: "Fraunces", serif;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink);
+    padding: 8px 10px;
+    outline: none;
+    resize: vertical;
+    min-height: 60px;
+  }
+  .scenario-textarea:focus { background: var(--focus); border-color: var(--ink); }
+  .scenario-textarea::placeholder { color: var(--ink-muted); font-style: italic; opacity: 0.55; }
+
+  /* Yes/No answer pills for the three base-case questions */
+  .yn-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: baseline;
+    padding: 6px 0;
+  }
+  .yn-row .q {
+    font-family: "Fraunces", serif;
+    font-size: 13px;
+    font-style: italic;
+    color: var(--ink-2);
+    line-height: 1.4;
+  }
+  .yn-toggle {
+    display: inline-flex;
+    border: 1px solid var(--rule);
+    background: var(--paper-2);
+    overflow: hidden;
+  }
+  .yn-toggle button {
+    background: transparent;
+    border: none;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    font-weight: 600;
+    color: var(--ink-muted);
+    padding: 6px 10px;
+    cursor: pointer;
+    border-right: 1px solid var(--rule);
+  }
+  .yn-toggle button:last-child { border-right: none; }
+  .yn-toggle button.selected {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .yn-toggle button[data-val="yes"].selected { background: var(--good); }
+  .yn-toggle button[data-val="no"].selected { background: var(--warn); }
+  .yn-toggle button[data-val="partial"].selected { background: var(--base); }
+
+  /* Leading indicators list */
+  .indicator-list {
+    counter-reset: ind;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .indicator-list li {
+    counter-increment: ind;
+    padding: 8px 0 8px 28px;
+    position: relative;
+    border-bottom: 1px dashed var(--rule-soft);
+  }
+  .indicator-list li:last-child { border-bottom: none; }
+  .indicator-list li::before {
+    content: counter(ind, decimal-leading-zero);
+    position: absolute;
+    left: 0; top: 10px;
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-size: 14px;
+    font-weight: 400;
+  }
+  .scenario-col[data-scenario="best"] .indicator-list li::before { color: var(--best); }
+  .scenario-col[data-scenario="base"] .indicator-list li::before { color: var(--base); }
+  .scenario-col[data-scenario="ohno"] .indicator-list li::before { color: var(--ohno); }
+
+  .indicator-list input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: "Inter Tight", sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    padding: 2px 0;
+    outline: none;
+  }
+  .indicator-list input:focus { background: var(--focus); }
+  .indicator-list input::placeholder { color: var(--ink-muted); font-style: italic; opacity: 0.55; }
+
+  /* ---------- Oh-No response plan ---------- */
+  .response-block {
+    background: var(--ohno-tint);
+    border: 2px solid var(--ohno);
+    padding: 28px 32px;
+  }
+  .response-intro {
+    font-family: "Fraunces", serif;
+    font-size: 15px;
+    color: var(--ohno-ink);
+    margin: 0 0 18px;
+    line-height: 1.55;
+    font-style: italic;
+  }
+  .response-intro strong { font-style: normal; font-weight: 600; color: var(--ohno); }
+
+  .response-section {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    margin-bottom: 14px;
+  }
+  .response-section:last-child { margin-bottom: 0; }
+  .response-section-head {
+    background: var(--ohno);
+    color: #fff;
+    padding: 10px 18px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .response-section-head .cat-num {
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ohno-soft);
+    font-weight: 400;
+    line-height: 1;
+  }
+  .response-section-head .cat-name {
+    font-family: "Inter Tight", sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+  }
+  .response-section-head .cat-hint {
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-size: 12px;
+    color: rgba(255,255,255,0.75);
+    margin-left: auto;
+  }
+
+  .response-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .response-table thead th {
+    background: var(--paper-3);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--ink-soft);
+    padding: 8px 12px;
+    text-align: left;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .response-table thead th:last-child { border-right: none; }
+  .response-table tbody tr { border-bottom: 1px solid var(--rule-soft); }
+  .response-table tbody tr:last-child { border-bottom: none; }
+  .response-table td {
+    padding: 0;
+    border-right: 1px solid var(--rule-soft);
+  }
+  .response-table td:last-child { border-right: none; }
+  .response-table input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: "Inter Tight", sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    padding: 10px 12px;
+    outline: none;
+  }
+  .response-table input:focus { background: var(--focus); }
+  .response-table input::placeholder { color: var(--ink-muted); font-style: italic; opacity: 0.55; }
+  .response-table .rank {
+    padding: 10px 12px;
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ohno);
+    text-align: center;
+    font-weight: 400;
+    width: 44px;
+  }
+
+  .delete-btn {
+    background: none; border: none;
+    color: var(--ink-muted);
+    cursor: pointer;
+    padding: 10px 12px;
+    font-size: 15px;
+    opacity: 0;
+    line-height: 1;
+  }
+  tr:hover .delete-btn { opacity: 1; }
+  .delete-btn:hover { color: var(--ohno); }
+
+  .add-row-bar {
+    padding: 10px 18px;
+    border-top: 1px solid var(--rule);
+    background: var(--paper-2);
+  }
+  .add-row-bar button {
+    background: transparent;
+    border: 1px dashed var(--ink-muted);
+    color: var(--ink-muted);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  .add-row-bar button:hover { color: var(--ohno); border-color: var(--ohno); }
+
+  /* ---------- Current-tracking declaration ---------- */
+  .tracking-block {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 36px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .tracking-block::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 6px;
+    background: linear-gradient(to bottom, var(--best) 0%, var(--best) 33%, var(--base) 33%, var(--base) 66%, var(--ohno) 66%);
+  }
+  .tracking-prompt {
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-size: 14px;
+    color: rgba(245,243,236,0.65);
+    margin: 0 0 8px;
+    letter-spacing: 0.02em;
+  }
+  .tracking-question {
+    font-family: "Fraunces", serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: #fff;
+    margin: 0 0 22px;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    max-width: 64ch;
+  }
+  .tracking-choices {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .tracking-choice {
+    background: transparent;
+    border: 2px solid rgba(255,255,255,0.2);
+    padding: 14px 18px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+  }
+  .tracking-choice:hover { border-color: rgba(255,255,255,0.5); }
+  .tracking-choice .tc-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .tracking-choice .tc-name {
+    font-family: "Fraunces", serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.01em;
+  }
+  .tracking-choice.selected[data-choice="best"] { background: var(--best); border-color: var(--best); }
+  .tracking-choice.selected[data-choice="base"] { background: var(--base); border-color: var(--base); }
+  .tracking-choice.selected[data-choice="ohno"] { background: var(--ohno); border-color: var(--ohno); }
+  .tracking-choice.selected .tc-label { color: rgba(255,255,255,0.85); }
+
+  .tracking-notes {
+    width: 100%;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.04);
+    color: #fff;
+    font-family: "Fraunces", serif;
+    font-size: 14px;
+    line-height: 1.55;
+    padding: 12px 14px;
+    outline: none;
+    resize: vertical;
+    min-height: 70px;
+  }
+  .tracking-notes:focus { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.5); }
+  .tracking-notes::placeholder { color: rgba(255,255,255,0.45); font-style: italic; }
+  .tracking-notes-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    font-weight: 600;
+    margin: 18px 0 8px;
+    display: block;
+  }
+
+  /* ---------- Print ---------- */
+  @media print {
+    @page { size: letter portrait; margin: 0.5in; }
+    body { background: white; }
+    .page { padding: 0; max-width: none; }
+    .toolbar { display: none !important; }
+    .delete-btn, .add-row-bar button { display: none !important; }
+    .masthead { margin-bottom: 10px; padding-bottom: 10px; }
+    h1 { font-size: 28px; }
+    .tagline { font-size: 11px; }
+    .scenario-strip { margin-bottom: 16px; height: 4px; }
+    section.chapter { margin-bottom: 22px; page-break-inside: avoid; }
+    .chapter-title { font-size: 18px; }
+    .chapter-intro { font-size: 11px; margin-bottom: 12px; }
+    .setup-field { padding: 8px 14px; }
+    .field-input { font-size: 13px; }
+    /* Stack scenarios vertically on print so each gets room */
+    .scenarios-grid { grid-template-columns: 1fr; gap: 10px; }
+    .scenario-col { page-break-inside: avoid; }
+    .scenario-header { padding: 10px 14px; }
+    .scenario-header h3 { font-size: 16px; }
+    .scenario-header p { font-size: 11px; }
+    .scenario-section { padding: 8px 14px; }
+    .section-label { font-size: 8px; margin-bottom: 6px; }
+    .scenario-input { font-size: 12px; padding: 3px 0 4px; }
+    .scenario-textarea { font-size: 11px; min-height: 36px; padding: 5px 8px; }
+    .yn-row .q { font-size: 11px; }
+    .yn-toggle button { padding: 3px 6px; font-size: 8px; }
+    .indicator-list li { padding: 4px 0 4px 24px; }
+    .indicator-list li::before { font-size: 11px; top: 5px; }
+    .indicator-list input { font-size: 11px; }
+    .response-block { padding: 12px 16px; page-break-inside: avoid; }
+    .response-intro { font-size: 11px; margin-bottom: 10px; }
+    .response-section-head { padding: 6px 14px; }
+    .response-section-head .cat-name { font-size: 11px; }
+    .response-section-head .cat-num { font-size: 14px; }
+    .response-section-head .cat-hint { font-size: 10px; }
+    .response-table thead th { padding: 5px 8px; font-size: 8px; }
+    .response-table input { padding: 5px 8px; font-size: 10px; }
+    .response-table .rank { padding: 5px 8px; font-size: 13px; }
+    .tracking-block { padding: 14px 18px; page-break-inside: avoid; }
+    .tracking-question { font-size: 14px; margin-bottom: 10px; }
+    .tracking-choice { padding: 8px 12px; }
+    .tracking-choice .tc-name { font-size: 13px; }
+    .tracking-notes { min-height: 40px; font-size: 11px; padding: 6px 8px; }
+    input, textarea {
+      background: transparent !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .scenario-header, .yn-toggle button.selected, .response-block,
+    .response-section-head, .tracking-block, .tracking-block::before,
+    .tracking-choice.selected, .scenario-strip > div, .scenario-col {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .page { padding: 24px; }
+    h1 { font-size: 34px; }
+    .masthead { grid-template-columns: 1fr; }
+    .meta { text-align: left; }
+    .setup-grid { grid-template-columns: 1fr; }
+    .setup-field { border-right: none; border-bottom: 1px solid var(--rule); }
+    .setup-field:last-child { border-bottom: none; }
+    .scenarios-grid { grid-template-columns: 1fr; }
+    .tracking-choices { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="masthead">
+    <div>
+      <p class="eyebrow">FoundersPath Playbook</p>
+      <h1>Best-Case, Base-Case, and <em>Oh-No</em> Scenarios</h1>
+      <p class="tagline">You don't build one financial scenario. You build three — and you pre-decide what you'll do in each one, before the pressure compromises your judgment.</p>
+    </div>
+    <div class="meta">
+      <div>Company <strong id="companyMeta">—</strong></div>
+      <div>Built <strong id="reviewedMeta">—</strong></div>
+      <div>Version <strong>v1.0</strong></div>
+    </div>
+  </div>
+  <div class="scenario-strip"><div class="strip-best"></div><div class="strip-base"></div><div class="strip-ohno"></div></div>
+
+  <div class="toolbar">
+    <button class="btn btn-excel" onclick="exportExcel()">Download to Excel</button>
+    <button class="btn btn-primary" onclick="window.print()">Print / Save as PDF</button>
+    <button class="btn btn-ghost" onclick="if(confirm('Clear all entries?')) clearAll()">Clear All</button>
+    <span class="toolbar-note">The scenarios must be genuinely different. Not percentage variations of the same base case.</span>
+  </div>
+
+  <!-- Section 0: Setup -->
+  <section class="chapter">
+    <div class="chapter-head">
+      <span class="chapter-num">00</span>
+      <h2 class="chapter-title">Setup</h2>
+      <span class="chapter-caption">Context · review cadence</span>
+    </div>
+    <div class="setup-grid">
+      <div class="setup-field">
+        <p class="field-label">Company</p>
+        <p class="field-hint">The venture these scenarios cover.</p>
+        <input class="field-input" type="text" id="company" placeholder="Company name" />
+      </div>
+      <div class="setup-field">
+        <p class="field-label">Review Date</p>
+        <p class="field-hint">Revisit monthly. Scenarios age quickly.</p>
+        <input class="field-input" type="date" id="reviewDate" />
+      </div>
+      <div class="setup-field">
+        <p class="field-label">Horizon</p>
+        <p class="field-hint">The window these scenarios project over.</p>
+        <input class="field-input" type="text" id="horizon" placeholder="e.g. 12 months" value="12 months" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 1: Three scenarios side-by-side -->
+  <section class="chapter">
+    <div class="chapter-head">
+      <span class="chapter-num">01</span>
+      <h2 class="chapter-title">Three Scenarios · Genuinely Different</h2>
+      <span class="chapter-caption">Best · Base · Oh-No — side by side</span>
+    </div>
+    <p class="chapter-intro">Build all three as separate columns with assumptions that actually diverge. The Oh-No should make you uncomfortable — if it doesn't, you haven't built it honestly. For each scenario, capture the assumptions that drive it, the three coverage questions, and the three leading indicators that signal you're tracking toward that outcome.</p>
+
+    <div class="scenarios-grid" id="scenariosGrid"></div>
+  </section>
+
+  <!-- Section 2: Oh-No response plan -->
+  <section class="chapter">
+    <div class="chapter-head">
+      <span class="chapter-num">02</span>
+      <h2 class="chapter-title">The Oh-No Response Plan</h2>
+      <span class="chapter-caption">Three categories · pre-decided · calm</span>
+    </div>
+    <p class="chapter-intro">Your Oh-No requires a pre-decided response plan — not a reaction. Write it now, while calm. When the trigger arrives, you're executing, not inventing. Three categories, in the order you'd pull them.</p>
+
+    <div class="response-block">
+      <p class="response-intro"><strong>If sales are consistently 40–50% slower than base case for 4–5 months in a row</strong> — which is not worst case, just the pattern of consecutive underperformance that catches founders off guard — here is what we do.</p>
+
+      <!-- Costs -->
+      <div class="response-section">
+        <div class="response-section-head">
+          <span class="cat-num">01</span>
+          <span class="cat-name">Costs to Cut</span>
+          <span class="cat-hint">in priority order · not "reduce expenses"</span>
+        </div>
+        <table class="response-table">
+          <thead>
+            <tr>
+              <th style="width: 44px">#</th>
+              <th style="width: 28%">What gets cut</th>
+              <th class="num" style="width: 14%">$ / month</th>
+              <th style="width: 14%">By when</th>
+              <th>Notes</th>
+              <th style="width: 36px"></th>
+            </tr>
+          </thead>
+          <tbody id="costsBody"></tbody>
+        </table>
+        <div class="add-row-bar"><button onclick="addResponseRow('costs')">+ Add cut</button></div>
+      </div>
+
+      <!-- Revenue acceleration -->
+      <div class="response-section">
+        <div class="response-section-head">
+          <span class="cat-num">02</span>
+          <span class="cat-name">Revenue Acceleration Levers</span>
+          <span class="cat-hint">what pushes revenue faster · ordered</span>
+        </div>
+        <table class="response-table">
+          <thead>
+            <tr>
+              <th style="width: 44px">#</th>
+              <th style="width: 30%">Lever</th>
+              <th style="width: 16%">Expected impact</th>
+              <th style="width: 14%">By when</th>
+              <th>Notes</th>
+              <th style="width: 36px"></th>
+            </tr>
+          </thead>
+          <tbody id="revenueBody"></tbody>
+        </table>
+        <div class="add-row-bar"><button onclick="addResponseRow('revenue')">+ Add lever</button></div>
+      </div>
+
+      <!-- Runway conversations -->
+      <div class="response-section">
+        <div class="response-section-head">
+          <span class="cat-num">03</span>
+          <span class="cat-name">Runway Extension Conversations</span>
+          <span class="cat-hint">who · what · trigger point</span>
+        </div>
+        <table class="response-table">
+          <thead>
+            <tr>
+              <th style="width: 44px">#</th>
+              <th style="width: 24%">Conversation</th>
+              <th style="width: 20%">Who</th>
+              <th style="width: 20%">Trigger point</th>
+              <th>Notes</th>
+              <th style="width: 36px"></th>
+            </tr>
+          </thead>
+          <tbody id="conversationsBody"></tbody>
+        </table>
+        <div class="add-row-bar"><button onclick="addResponseRow('conversations')">+ Add conversation</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Current tracking declaration -->
+  <section class="chapter">
+    <div class="chapter-head">
+      <span class="chapter-num">03</span>
+      <h2 class="chapter-title">The Honest Question</h2>
+      <span class="chapter-caption">Based on evidence · not hope</span>
+    </div>
+    <p class="chapter-intro">Based on what you know today — actual pipeline, conversion rates so far, sales cycle experience, momentum in your business development — which scenario does the evidence point toward? Not which one you want. Which one the data suggests. This determines where your energy goes right now.</p>
+
+    <div class="tracking-block">
+      <p class="tracking-prompt">As of this review:</p>
+      <p class="tracking-question">Which scenario are we currently tracking toward?</p>
+      <div class="tracking-choices" id="trackingChoices">
+        <button class="tracking-choice" data-choice="best">
+          <div class="tc-label">Scenario 01</div>
+          <div class="tc-name">Best Case</div>
+        </button>
+        <button class="tracking-choice" data-choice="base">
+          <div class="tc-label">Scenario 02</div>
+          <div class="tc-name">Base Case</div>
+        </button>
+        <button class="tracking-choice" data-choice="ohno">
+          <div class="tc-label">Scenario 03</div>
+          <div class="tc-name">Oh-No</div>
+        </button>
+      </div>
+
+      <label class="tracking-notes-label">Evidence for this answer</label>
+      <textarea class="tracking-notes" id="trackingEvidence" placeholder="The specific facts that point toward this scenario. Which conversion rates have come in. Which sales cycles have stretched. What the actual pipeline looks like."></textarea>
+
+      <label class="tracking-notes-label">What this means we do next</label>
+      <textarea class="tracking-notes" id="trackingAction" placeholder="If Oh-No: start executing that response plan today, not in two months. If Base: hold course and track leading indicators weekly. If Best: make capacity and investment decisions now, with the calm you have."></textarea>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // ---------------- Scenario definitions ----------------
+  const SCENARIOS = [
+    {
+      key: "best",
+      tag: "Scenario 01",
+      name: "Best Case",
+      subtitle: "Ceiling awareness — not a target. Two or three opportunities close faster, conversion rates at the top of the realistic range, pipeline building strongly.",
+    },
+    {
+      key: "base",
+      tag: "Scenario 02",
+      name: "Base Case",
+      subtitle: "Your operating target. Built on the most honest assessment of what's probable — not hope, not fear. Midpoint conversion rates. Realistic sales cycle.",
+    },
+    {
+      key: "ohno",
+      tag: "Scenario 03",
+      name: "Oh-No",
+      subtitle: "Sales 40–50% slower than base for 4–5 consecutive months. Not worst case — just the pattern of consecutive underperformance that catches founders off guard.",
+    },
+  ];
+
+  // ---------------- State ----------------
+  function emptyScenario() {
+    return {
+      assumptions: "",
+      revM3: "", revM6: "", revM12: "",
+      q1: "", q2: "", q3: "",           // yes / partial / no for the three coverage questions
+      indicators: ["", "", ""],
+    };
+  }
+
+  let state = {
+    company: "",
+    reviewDate: "",
+    horizon: "12 months",
+    scenarios: {
+      best: emptyScenario(),
+      base: emptyScenario(),
+      ohno: emptyScenario(),
+    },
+    response: {
+      costs: [
+        { what: "", amount: "", when: "", notes: "" },
+        { what: "", amount: "", when: "", notes: "" },
+        { what: "", amount: "", when: "", notes: "" },
+      ],
+      revenue: [
+        { what: "", amount: "", when: "", notes: "" },
+        { what: "", amount: "", when: "", notes: "" },
+        { what: "", amount: "", when: "", notes: "" },
+      ],
+      conversations: [
+        { what: "", amount: "", when: "", notes: "" },
+        { what: "", amount: "", when: "", notes: "" },
+      ],
+    },
+    tracking: {
+      choice: null,
+      evidence: "",
+      action: "",
+    },
+  };
+
+  // ---------------- Utilities ----------------
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  // ---------------- Render scenario columns ----------------
+  function renderScenarios() {
+    const grid = document.getElementById("scenariosGrid");
+    grid.innerHTML = "";
+    SCENARIOS.forEach(meta => {
+      const s = state.scenarios[meta.key];
+      const col = document.createElement("div");
+      col.className = "scenario-col";
+      col.dataset.scenario = meta.key;
+      col.innerHTML = `
+        <div class="scenario-header">
+          <div class="tag">${meta.tag}</div>
+          <h3>${meta.name}</h3>
+          <p>${meta.subtitle}</p>
+        </div>
+
+        <div class="scenario-section">
+          <p class="section-label"><span class="num">01</span>Assumptions</p>
+          <textarea class="scenario-textarea" data-scenario="${meta.key}" data-field="assumptions"
+                    placeholder="Conversion rates, sales cycle length, pipeline growth, capacity, anything that makes this scenario different from the others.">${escapeHtml(s.assumptions)}</textarea>
+        </div>
+
+        <div class="scenario-section">
+          <p class="section-label"><span class="num">02</span>Expected Revenue</p>
+          <div style="display:grid;grid-template-columns:1fr;gap:8px;">
+            <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--ink-muted);">By Month 3</label>
+            <input class="scenario-input" type="text" data-scenario="${meta.key}" data-field="revM3" value="${escapeHtml(s.revM3)}" placeholder="$ / month" />
+            <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--ink-muted);margin-top:6px;">By Month 6</label>
+            <input class="scenario-input" type="text" data-scenario="${meta.key}" data-field="revM6" value="${escapeHtml(s.revM6)}" placeholder="$ / month" />
+            <label style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--ink-muted);margin-top:6px;">By Month 12</label>
+            <input class="scenario-input" type="text" data-scenario="${meta.key}" data-field="revM12" value="${escapeHtml(s.revM12)}" placeholder="$ / month" />
+          </div>
+        </div>
+
+        <div class="scenario-section">
+          <p class="section-label"><span class="num">03</span>Coverage Questions</p>
+          <div class="yn-row">
+            <div class="q">By M6, do you cover business operating costs?</div>
+            ${ynToggle(meta.key, "q1", s.q1)}
+          </div>
+          <div class="yn-row">
+            <div class="q">By M12, do you cover full monthly burn?</div>
+            ${ynToggle(meta.key, "q2", s.q2)}
+          </div>
+          <div class="yn-row">
+            <div class="q">Extends runway to meaningful options (not just delay)?</div>
+            ${ynToggle(meta.key, "q3", s.q3)}
+          </div>
+        </div>
+
+        <div class="scenario-section">
+          <p class="section-label"><span class="num">04</span>Leading Indicators</p>
+          <ul class="indicator-list">
+            ${[0, 1, 2].map(i => `
+              <li>
+                <input type="text" data-scenario="${meta.key}" data-indicator="${i}"
+                       value="${escapeHtml(s.indicators[i] || "")}"
+                       placeholder="${indicatorPlaceholder(meta.key, i)}" />
+              </li>
+            `).join("")}
+          </ul>
+        </div>
+      `;
+      grid.appendChild(col);
+    });
+  }
+
+  function ynToggle(scenario, field, current) {
+    const opts = [
+      { val: "yes", label: "YES" },
+      { val: "partial", label: "PART" },
+      { val: "no", label: "NO" },
+    ];
+    return `<div class="yn-toggle" data-yn-scenario="${scenario}" data-yn-field="${field}">
+      ${opts.map(o => `
+        <button type="button" data-val="${o.val}" class="${current === o.val ? 'selected' : ''}">${o.label}</button>
+      `).join("")}
+    </div>`;
+  }
+
+  function indicatorPlaceholder(scenario, idx) {
+    const hints = {
+      best: [
+        "e.g. Proposals sent in last 30 days ≥ 8",
+        "e.g. Close rate on Active Evaluation ≥ 60%",
+        "e.g. Average deal size > $15K in pipeline",
+      ],
+      base: [
+        "e.g. 3–5 proposals sent / month",
+        "e.g. Close rate around 30–40%",
+        "e.g. Sales cycle around 45 days",
+      ],
+      ohno: [
+        "e.g. Second meetings dropping, not converting",
+        "e.g. Proposals sitting > 21 days without response",
+        "e.g. Pipeline shrinking month over month",
+      ],
+    };
+    return hints[scenario][idx];
+  }
+
+  // ---------------- Render response tables ----------------
+  function renderResponseTable(kind) {
+    const tbody = document.getElementById(`${kind}Body`);
+    tbody.innerHTML = "";
+    const isCostOrRevenue = (kind === "costs" || kind === "revenue");
+    const labels = {
+      costs: { what: "Expense", amount: "$ / mo", when: "By when" },
+      revenue: { what: "Lever", amount: "Impact", when: "By when" },
+      conversations: { what: "Conversation", amount: "Who", when: "Trigger point" },
+    }[kind];
+
+    state.response[kind].forEach((row, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="rank">${idx + 1}</td>
+        <td><input type="text" value="${escapeHtml(row.what)}" data-response="${kind}" data-idx="${idx}" data-field="what" placeholder="${labels.what}" /></td>
+        <td${isCostOrRevenue ? ' class="num"' : ''}><input type="text" value="${escapeHtml(row.amount)}" data-response="${kind}" data-idx="${idx}" data-field="amount" placeholder="${labels.amount}" /></td>
+        <td><input type="text" value="${escapeHtml(row.when)}" data-response="${kind}" data-idx="${idx}" data-field="when" placeholder="${labels.when}" /></td>
+        <td><input type="text" value="${escapeHtml(row.notes)}" data-response="${kind}" data-idx="${idx}" data-field="notes" placeholder="Notes" /></td>
+        <td><button class="delete-btn" data-delete="${kind}" data-idx="${idx}" title="Remove">×</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderAll() {
+    renderScenarios();
+    renderResponseTable("costs");
+    renderResponseTable("revenue");
+    renderResponseTable("conversations");
+    renderTrackingChoice();
+  }
+
+  function renderTrackingChoice() {
+    document.querySelectorAll(".tracking-choice").forEach(btn => {
+      btn.classList.toggle("selected", btn.dataset.choice === state.tracking.choice);
+    });
+  }
+
+  function addResponseRow(kind) {
+    state.response[kind].push({ what: "", amount: "", when: "", notes: "" });
+    renderResponseTable(kind);
+  }
+
+  function updateMeta() {
+    document.getElementById("companyMeta").textContent = state.company || "—";
+    document.getElementById("reviewedMeta").textContent = state.reviewDate
+      ? new Date(state.reviewDate + "T00:00:00").toLocaleDateString("en-US",
+          { year: "numeric", month: "short", day: "numeric" })
+      : "—";
+  }
+
+  // ---------------- Event wiring ----------------
+  document.addEventListener("input", (e) => {
+    const t = e.target;
+
+    // Top-level fields
+    if (t.id === "company") { state.company = t.value; updateMeta(); return; }
+    if (t.id === "reviewDate") { state.reviewDate = t.value; updateMeta(); return; }
+    if (t.id === "horizon") { state.horizon = t.value; return; }
+    if (t.id === "trackingEvidence") { state.tracking.evidence = t.value; return; }
+    if (t.id === "trackingAction") { state.tracking.action = t.value; return; }
+
+    // Scenario text/textarea inputs
+    if (t.dataset && t.dataset.scenario && t.dataset.field) {
+      const s = state.scenarios[t.dataset.scenario];
+      s[t.dataset.field] = t.value;
+      return;
+    }
+    // Indicators
+    if (t.dataset && t.dataset.scenario && t.dataset.indicator != null) {
+      const idx = parseInt(t.dataset.indicator, 10);
+      state.scenarios[t.dataset.scenario].indicators[idx] = t.value;
+      return;
+    }
+    // Response tables
+    if (t.dataset && t.dataset.response && t.dataset.idx != null) {
+      const idx = parseInt(t.dataset.idx, 10);
+      state.response[t.dataset.response][idx][t.dataset.field] = t.value;
+      return;
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    const t = e.target;
+
+    // Yes/No toggle buttons
+    const btn = t.closest && t.closest(".yn-toggle button");
+    if (btn) {
+      const group = btn.closest(".yn-toggle");
+      const scenario = group.dataset.ynScenario;
+      const field = group.dataset.ynField;
+      const val = btn.dataset.val;
+      // Toggle: clicking the selected one clears it
+      if (state.scenarios[scenario][field] === val) {
+        state.scenarios[scenario][field] = "";
+      } else {
+        state.scenarios[scenario][field] = val;
+      }
+      // Re-render just this toggle group
+      group.querySelectorAll("button").forEach(b => {
+        b.classList.toggle("selected", b.dataset.val === state.scenarios[scenario][field]);
+      });
+      return;
+    }
+
+    // Delete response rows
+    if (t.dataset && t.dataset.delete && t.dataset.idx != null) {
+      const kind = t.dataset.delete;
+      const idx = parseInt(t.dataset.idx, 10);
+      if (state.response[kind].length <= 1) {
+        alert("Keep at least one line.");
+        return;
+      }
+      state.response[kind].splice(idx, 1);
+      renderResponseTable(kind);
+      return;
+    }
+
+    // Tracking choice buttons
+    const tc = t.closest && t.closest(".tracking-choice");
+    if (tc) {
+      const choice = tc.dataset.choice;
+      state.tracking.choice = state.tracking.choice === choice ? null : choice;
+      renderTrackingChoice();
+    }
+  });
+
+  function clearAll() {
+    state.company = "";
+    state.reviewDate = "";
+    state.horizon = "12 months";
+    state.scenarios = { best: emptyScenario(), base: emptyScenario(), ohno: emptyScenario() };
+    state.response = {
+      costs: [
+        { what: "", amount: "", when: "", notes: "" },
+        { what: "", amount: "", when: "", notes: "" },
+        { what: "", amount: "", when: "", notes: "" },
+      ],
+      revenue: [
+        { what: "", amount: "", when: "", notes: "" },
+        { what: "", amount: "", when: "", notes: "" },
+        { what: "", amount: "", when: "", notes: "" },
+      ],
+      conversations: [
+        { what: "", amount: "", when: "", notes: "" },
+        { what: "", amount: "", when: "", notes: "" },
+      ],
+    };
+    state.tracking = { choice: null, evidence: "", action: "" };
+
+    ["company", "reviewDate", "trackingEvidence", "trackingAction"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+    document.getElementById("horizon").value = "12 months";
+
+    renderAll();
+    updateMeta();
+  }
+
+  // ---------------- Excel export ----------------
+  function exportExcel() {
+    const wb = XLSX.utils.book_new();
+
+    const ynLabel = v => v === "yes" ? "Yes" : v === "no" ? "No" : v === "partial" ? "Partial" : "";
+
+    // Sheet 1: Summary / Scenarios comparison
+    const header = ["", "Best Case", "Base Case", "Oh-No"];
+    const rows = [
+      ["BEST-CASE, BASE-CASE, AND OH-NO SCENARIOS"],
+      [`${state.company || "[Company]"} · FoundersPath`],
+      [""],
+      ["Review Date:", state.reviewDate || ""],
+      ["Horizon:", state.horizon || ""],
+      [""],
+      header,
+      ["Assumptions",
+        state.scenarios.best.assumptions,
+        state.scenarios.base.assumptions,
+        state.scenarios.ohno.assumptions],
+      ["Expected Revenue · M3",
+        state.scenarios.best.revM3,
+        state.scenarios.base.revM3,
+        state.scenarios.ohno.revM3],
+      ["Expected Revenue · M6",
+        state.scenarios.best.revM6,
+        state.scenarios.base.revM6,
+        state.scenarios.ohno.revM6],
+      ["Expected Revenue · M12",
+        state.scenarios.best.revM12,
+        state.scenarios.base.revM12,
+        state.scenarios.ohno.revM12],
+      [""],
+      ["— COVERAGE QUESTIONS —"],
+      ["By M6, covers business operating costs?",
+        ynLabel(state.scenarios.best.q1),
+        ynLabel(state.scenarios.base.q1),
+        ynLabel(state.scenarios.ohno.q1)],
+      ["By M12, covers full monthly burn?",
+        ynLabel(state.scenarios.best.q2),
+        ynLabel(state.scenarios.base.q2),
+        ynLabel(state.scenarios.ohno.q2)],
+      ["Extends runway to meaningful options?",
+        ynLabel(state.scenarios.best.q3),
+        ynLabel(state.scenarios.base.q3),
+        ynLabel(state.scenarios.ohno.q3)],
+      [""],
+      ["— LEADING INDICATORS —"],
+      ["Indicator 1",
+        state.scenarios.best.indicators[0],
+        state.scenarios.base.indicators[0],
+        state.scenarios.ohno.indicators[0]],
+      ["Indicator 2",
+        state.scenarios.best.indicators[1],
+        state.scenarios.base.indicators[1],
+        state.scenarios.ohno.indicators[1]],
+      ["Indicator 3",
+        state.scenarios.best.indicators[2],
+        state.scenarios.base.indicators[2],
+        state.scenarios.ohno.indicators[2]],
+    ];
+    const wsSummary = XLSX.utils.aoa_to_sheet(rows);
+    wsSummary["!cols"] = [{ wch: 46 }, { wch: 38 }, { wch: 38 }, { wch: 38 }];
+    XLSX.utils.book_append_sheet(wb, wsSummary, "Scenarios");
+
+    // Sheet 2: Oh-No Response Plan
+    const respRows = [
+      ["OH-NO RESPONSE PLAN"],
+      ["Pre-decided actions if sales run 40–50% slower than base case for 4–5 consecutive months."],
+      [""],
+      ["— 01 · COSTS TO CUT (in priority order) —"],
+      ["#", "What gets cut", "$ / month", "By when", "Notes"],
+      ...state.response.costs.map((r, i) => [i + 1, r.what, r.amount, r.when, r.notes]),
+      [""],
+      ["— 02 · REVENUE ACCELERATION LEVERS —"],
+      ["#", "Lever", "Expected impact", "By when", "Notes"],
+      ...state.response.revenue.map((r, i) => [i + 1, r.what, r.amount, r.when, r.notes]),
+      [""],
+      ["— 03 · RUNWAY EXTENSION CONVERSATIONS —"],
+      ["#", "Conversation", "Who", "Trigger point", "Notes"],
+      ...state.response.conversations.map((r, i) => [i + 1, r.what, r.amount, r.when, r.notes]),
+    ];
+    const wsResp = XLSX.utils.aoa_to_sheet(respRows);
+    wsResp["!cols"] = [{ wch: 6 }, { wch: 34 }, { wch: 22 }, { wch: 22 }, { wch: 50 }];
+    XLSX.utils.book_append_sheet(wb, wsResp, "Oh-No Response");
+
+    // Sheet 3: Tracking declaration
+    const trackingLabel = {
+      best: "Best Case",
+      base: "Base Case",
+      ohno: "Oh-No",
+    }[state.tracking.choice] || "";
+    const trackingRows = [
+      ["CURRENT TRACKING DECLARATION"],
+      [""],
+      ["As of:", state.reviewDate || ""],
+      ["Currently tracking toward:", trackingLabel],
+      [""],
+      ["Evidence for this answer:"],
+      [state.tracking.evidence || ""],
+      [""],
+      ["What this means we do next:"],
+      [state.tracking.action || ""],
+    ];
+    const wsTrack = XLSX.utils.aoa_to_sheet(trackingRows);
+    wsTrack["!cols"] = [{ wch: 32 }, { wch: 80 }];
+    XLSX.utils.book_append_sheet(wb, wsTrack, "Tracking");
+
+    const stamp = new Date().toISOString().slice(0, 10);
+    const safeName = (state.company || "company").replace(/[^a-z0-9]+/gi, "_").toLowerCase();
+    XLSX.writeFile(wb, `${safeName}_scenarios_${stamp}.xlsx`);
+  }
+
+  // ---------------- Init ----------------
+  (function init() {
+    const today = new Date().toISOString().slice(0, 10);
+    state.reviewDate = today;
+    document.getElementById("reviewDate").value = today;
+
+    renderAll();
+    updateMeta();
+  })();
+</script>
+</body>
+</html>
